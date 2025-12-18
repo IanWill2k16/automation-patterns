@@ -2,9 +2,17 @@ from netmiko import ConnectHandler
 from switch_list import switchList
 # switch_list.py contains connection info and is excluded from source control
 
-macAddress = ('aa:bb:cc:dd:ee:ff').lower()
+macAddress = 'aa:bb:cc:dd:ee:ff'
 
-def findMac(macAddress):
+def normalizeMac(mac: str) -> str:
+    hex_only = re.sub(r'[^0-9a-fA-F]', '', mac)
+    if len(hex_only) != 12:
+        raise ValueError(f"Invalid MAC address: {mac}")
+    hex_only = hex_only.lower()
+    return f"{hex_only[:6]}-{hex_only[6:]}"
+
+def findMac(rawMacAddress):
+    macAddress = normalizeMac(rawMacAddress)
     command = "show mac-address"
     output = net_connect.send_command(command)
     output_test = output.split('\n')
@@ -46,6 +54,6 @@ for switch in switchList:
         net_connect = ConnectHandler(**switch)
 
         print(findMac(macAddress))
-        
+
     except:
         pass
