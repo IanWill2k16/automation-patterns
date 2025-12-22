@@ -87,6 +87,112 @@ The scripts in this directory demonstrate controlled, auditable identity automat
 
 ---
 
+# Autopilot Device Renaming Automation
+
+## Overview
+
+This script automates the reconciliation of **on-prem Active Directory computer names** with **Microsoft Intune / Windows Autopilot device identities**.
+
+In hybrid environments, devices are often provisioned with temporary or generic hostnames during imaging, while the authoritative device name is defined later in Intune. Manually reconciling these names is time-consuming and error-prone at scale.
+
+This automation safely aligns on-prem computer names with their corresponding Autopilot identities using Microsoft Graph.
+
+---
+
+## Problem
+
+In hybrid AD / Entra ID environments:
+
+- Devices may initially join the domain with placeholder names
+- Intune / Autopilot maintains the authoritative device identity
+- Manual renaming requires:
+  - Looking up serial numbers
+  - Matching devices across systems
+  - Performing privileged rename + reboot operations
+- This process does not scale and introduces risk when done manually
+
+---
+
+## Solution
+
+This script:
+
+1. Queries on-prem Active Directory for computer objects
+2. Authenticates to Microsoft Graph using an application identity
+3. Retrieves all Windows Autopilot device identities (with pagination)
+4. Matches devices by **hardware serial number**
+5. Safely renames computers only when:
+   - The device is reachable
+   - A serial number match is found
+   - A valid target name exists
+6. Reboots devices only after a successful rename
+
+All actions are gated behind validation checks to minimize operational risk.
+
+---
+
+## Key Concepts Demonstrated
+
+- Hybrid identity automation (AD + Entra ID)
+- Microsoft Graph API usage
+- OAuth2 client credentials flow
+- Defensive automation patterns
+- Idempotent, conditional execution
+- Separation of secrets from code
+- Safe handling of privileged operations
+
+---
+
+## Security Notes
+
+- **No credentials are stored in source control**
+- Tenant IDs, client IDs, and secrets are represented as placeholders
+- In production, secrets were retrieved from a secure secret store
+- Domain credentials are abstracted behind a placeholder function
+- Script logic is read-only until all validation checks pass
+
+This repository contains a **sanitized version** suitable for demonstration and review.
+
+---
+
+## Script Flow
+
+1. Retrieve domain computer objects
+2. Acquire Microsoft Graph access token
+3. Enumerate Autopilot devices (handling pagination)
+4. For each eligible computer:
+   - Verify network reachability
+   - Retrieve BIOS serial number remotely
+   - Match against Autopilot inventory
+   - Rename computer if a valid match is found
+   - Reboot only after successful rename
+
+---
+
+## Intended Use
+
+This script is intended as a **reference automation pattern**, not a drop-in production tool.
+
+It demonstrates how operational identity problems can be translated into:
+- Safe
+- Auditable
+- Maintainable automation
+
+---
+
+## Why This Matters
+
+This automation replaces a brittle, manual process with a controlled workflow that:
+
+- Reduces technician effort
+- Prevents naming inconsistencies
+- Improves endpoint lifecycle hygiene
+- Scales cleanly across large environments
+
+It reflects real-world tenant administration challenges and the automation patterns used to solve them.
+
+---
+
 ## `aad-to-ad-user-provisioning.ps1`
 
 ### Problem
